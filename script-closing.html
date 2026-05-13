@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Script Closing — Téléphone 300€</title>
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --bg-card: #141414;
+    --bg-card-hover: #1a1a1a;
+    --bg-elevated: #1f1f1f;
+    --border: #2a2a2a;
+    --border-light: #333;
+    --text: #ffffff;
+    --text-dim: #9ca3af;
+    --text-faint: #6b7280;
+    --red: #ff2e3e;
+    --red-soft: rgba(255, 46, 62, 0.08);
+    --green: #10b981;
+    --green-soft: rgba(16, 185, 129, 0.05);
+    --yellow: #f59e0b;
+    --yellow-soft: rgba(245, 158, 11, 0.05);
+    --blue: #3b82f6;
+    --blue-soft: rgba(59, 130, 246, 0.08);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* === HEADER === */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.5rem 2rem;
+    border-bottom: 2px solid var(--red);
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 100;
+  }
+  .logo {
+    font-weight: 800;
+    font-size: 1.4rem;
+    letter-spacing: 0.05em;
+  }
+  .logo .accent { color: var(--red); }
+  .phase-title {
+    font-size: 0.85rem;
+    letter-spacing: 0.15em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    text-align: center;
+    flex: 1;
+  }
+  .btn-restart {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border-light);
+    padding: 0.6rem 1.1rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+  }
+  .btn-restart:hover { border-color: var(--red); color: var(--red); }
+
+  /* === PROGRESS BAR === */
+  .progress {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1.5rem 2rem;
+    overflow-x: auto;
+    border-bottom: 1px solid var(--border);
+  }
+  .step {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .step:not(.active):not(.done) { opacity: 0.5; }
+  .step:hover { opacity: 1; }
+  .step-num {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--bg-elevated);
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+    border: 1px solid var(--border);
+  }
+  .step.done .step-num {
+    background: var(--green);
+    color: #000;
+    border-color: var(--green);
+  }
+  .step.active .step-num {
+    background: var(--red);
+    color: #fff;
+    border-color: var(--red);
+    box-shadow: 0 0 0 4px rgba(255, 46, 62, 0.15);
+  }
+  .step-label {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
+  .step.active .step-label { color: var(--text); }
+  .step-connector {
+    width: 30px;
+    height: 1px;
+    background: var(--border);
+  }
+  .step.done + .step-connector { background: var(--green); }
+
+  /* === MAIN === */
+  .main {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+  .toolbar {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+  }
+  .btn-back, .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 1rem;
+    border-radius: 0.4rem;
+    font-size: 0.85rem;
+    border: 1px solid var(--border-light);
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-back:hover { color: var(--text); border-color: var(--text-dim); }
+  .badge { cursor: default; }
+  .badge.duration { color: var(--text-dim); }
+  .badge.duration.warn { color: var(--yellow); border-color: rgba(245, 158, 11, 0.4); background: var(--yellow-soft); }
+  .badge.duration.ambition { color: var(--yellow); border-color: rgba(245, 158, 11, 0.4); background: var(--yellow-soft); }
+  .badge.duration.bridge { color: var(--blue); border-color: rgba(59, 130, 246, 0.4); background: var(--blue-soft); }
+  .badge.critical { color: var(--red); border-color: rgba(255, 46, 62, 0.4); background: var(--red-soft); letter-spacing: 0.05em; font-weight: 600; }
+  .badge.moment { color: var(--red); border-color: rgba(255, 46, 62, 0.4); background: var(--red-soft); letter-spacing: 0.08em; font-weight: 600; text-transform: uppercase; }
+  .badge.guide { color: var(--red); border-color: rgba(255, 46, 62, 0.4); background: var(--red-soft); letter-spacing: 0.08em; font-weight: 600; text-transform: uppercase; }
+
+  /* === PHASE CARD === */
+  .phase-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    overflow: hidden;
+  }
+  .phase-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.5rem 1.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .phase-emoji { font-size: 1.75rem; line-height: 1; }
+  .phase-name {
+    font-size: 1.3rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+  .phase-subtitle {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    margin-top: 0.3rem;
+  }
+  .phase-body {
+    padding: 1.5rem 1.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+  }
+
+  /* === BLOCKS === */
+  .block {
+    padding: 1rem 1.25rem;
+    border-radius: 0.5rem;
+    border-left: 3px solid;
+    font-size: 0.95rem;
+  }
+  .block-blue {
+    border-color: var(--blue);
+    background: var(--blue-soft);
+  }
+  .block-yellow {
+    border-color: var(--yellow);
+    background: var(--yellow-soft);
+    color: var(--yellow);
+    text-align: center;
+  }
+  .block-yellow b, .block-yellow strong { color: var(--yellow); }
+  .block-red-question {
+    border-color: var(--red);
+    background: var(--red-soft);
+    text-align: center;
+    padding: 1.25rem 1.5rem;
+  }
+  .block-red-question .label {
+    color: var(--red);
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+    display: block;
+  }
+  .block-red-question .text {
+    font-size: 1.05rem;
+    font-weight: 600;
+  }
+  .block-tu-dis {
+    border-color: var(--green);
+    background: var(--green-soft);
+    padding: 1.1rem 1.3rem;
+  }
+  .block-tu-dis .label {
+    color: var(--green);
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 0.6rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .block-tu-dis .text {
+    font-style: italic;
+    text-align: center;
+    line-height: 1.7;
+  }
+  .block-tu-dis .text p + p { margin-top: 0.8rem; }
+  .block-tu-dis .text b, .block-tu-dis .text strong { font-style: normal; }
+  .block-blue b, .block-blue strong { color: var(--blue); }
+
+  /* === DIVIDER WITH LABEL === */
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    color: var(--text-faint);
+    font-size: 0.72rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin: 0.5rem 0;
+  }
+  .divider::before, .divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .il-dit-quoi {
+    color: var(--text-faint);
+    font-size: 0.72rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 0.3rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* === BRANCH BUTTONS === */
+  .branches {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+  .branch {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.2rem;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 0.6rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text);
+    font-size: 0.95rem;
+    font-weight: 500;
+    text-align: left;
+    width: 100%;
+  }
+  .branch:hover { background: var(--bg-card-hover); border-color: var(--border-light); }
+  .branch.active {
+    border-color: var(--red);
+    background: rgba(255, 46, 62, 0.05);
+    color: var(--red);
+  }
+  .branch.active .branch-arrow { color: var(--red); }
+  .branch-content { display: flex; align-items: center; gap: 0.75rem; }
+  .branch-emoji { font-size: 1.1rem; }
+  .branch-arrow { color: var(--text-faint); transition: color 0.2s; }
+  .branch-arrow.guide { color: var(--text-dim); font-size: 0.85rem; }
+
+  .branch.cta {
+    background: transparent;
+    border-color: var(--border-light);
+    margin-top: 0.5rem;
+  }
+  .branch.cta:hover { border-color: var(--green); color: var(--green); }
+  .branch.cta:hover .branch-arrow { color: var(--green); }
+
+  /* === REVEAL ZONE === */
+  .reveal {
+    display: none;
+    flex-direction: column;
+    gap: 0.9rem;
+    padding-top: 0.5rem;
+    animation: fadeIn 0.3s ease;
+  }
+  .reveal.open { display: flex; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* === FILL-IN-BLANK (Phase 4) === */
+  .fill-zone {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .fill-zone-title {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 0.78rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .fill-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    text-align: center;
+  }
+  .fill-item .fill-label {
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 0.6rem;
+  }
+  .fill-item.douleur .fill-label { color: var(--red); }
+  .fill-item.ambition .fill-label { color: var(--green); }
+  .fill-item .fill-text { font-style: italic; }
+  .fill-item input {
+    background: transparent;
+    border: none;
+    border-bottom: 1px dashed var(--text-faint);
+    color: var(--text);
+    font-size: 0.95rem;
+    padding: 0.3rem 0.5rem;
+    min-width: 200px;
+    font-family: inherit;
+    text-align: center;
+  }
+  .fill-item input:focus { outline: none; border-color: var(--green); }
+  .fill-hint {
+    font-size: 0.78rem;
+    color: var(--text-faint);
+    margin-top: 0.5rem;
+  }
+  .fill-warning {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--border);
+  }
+
+  /* === ACCORDION (Phase 6) === */
+  .accordion {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    overflow: hidden;
+  }
+  .accordion + .accordion { margin-top: 0.75rem; }
+  .acc-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.1rem 1.3rem;
+    cursor: pointer;
+    transition: background 0.2s;
+    user-select: none;
+  }
+  .acc-header:hover { background: var(--bg-card-hover); }
+  .acc-title-wrap { display: flex; align-items: center; gap: 0.75rem; }
+  .acc-emoji { font-size: 1.2rem; }
+  .acc-content { display: flex; flex-direction: column; gap: 0.2rem; }
+  .acc-label {
+    color: var(--red);
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .acc-title { font-size: 1rem; font-weight: 600; }
+  .acc-chevron {
+    color: var(--text-faint);
+    transition: transform 0.3s;
+    font-size: 0.85rem;
+  }
+  .accordion.open .acc-chevron { transform: rotate(180deg); }
+  .acc-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease;
+  }
+  .accordion.open .acc-body { max-height: 4000px; }
+  .acc-body-inner {
+    padding: 0 1.3rem 1.3rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    border-top: 1px solid var(--border);
+    padding-top: 1.1rem;
+  }
+
+  /* === TIMELINE STEPS (objections) === */
+  .timeline { position: relative; padding-left: 1.5rem; }
+  .timeline::before {
+    content: "";
+    position: absolute;
+    left: 5px;
+    top: 8px;
+    bottom: 8px;
+    width: 1px;
+    background: var(--border);
+  }
+  .timeline-step { position: relative; margin-bottom: 1.2rem; }
+  .timeline-step::before {
+    content: "";
+    position: absolute;
+    left: -1.5rem;
+    top: 6px;
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: var(--red);
+    border: 2px solid var(--bg-card);
+  }
+  .timeline-step.green::before { background: var(--green); }
+  .timeline-step-label {
+    color: var(--text-faint);
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 0.6rem;
+    text-align: center;
+  }
+  .timeline-step-content { display: flex; flex-direction: column; gap: 0.7rem; }
+
+  /* === CLOSE OPTIONS (Phase 5) === */
+  .close-options {
+    border: 1px solid rgba(255, 46, 62, 0.3);
+    background: var(--red-soft);
+    border-radius: 0.6rem;
+    padding: 1rem 1.25rem;
+  }
+  .close-options-title {
+    color: var(--green);
+    text-align: center;
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+  .close-option {
+    text-align: center;
+    padding: 0.5rem 0;
+    font-style: italic;
+    font-size: 0.95rem;
+  }
+  .close-option + .close-option { border-top: 1px dashed var(--border); }
+  .close-option b { font-style: normal; font-weight: 600; }
+
+  .branch-sub {
+    font-size: 0.78rem;
+    color: var(--text-faint);
+    margin-top: 0.2rem;
+  }
+
+  /* === HIDDEN === */
+  .hidden { display: none !important; }
+
+  /* === MOBILE === */
+  @media (max-width: 768px) {
+    .header { padding: 1rem; }
+    .logo { font-size: 1.1rem; }
+    .phase-title { display: none; }
+    .progress { padding: 1rem; gap: 0.3rem; }
+    .step-connector { width: 15px; }
+    .step-label { display: none; }
+    .step.active .step-label {
+      display: inline;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .main { padding: 1.25rem 0.75rem 3rem; }
+    .phase-header { padding: 1.1rem 1rem; }
+    .phase-body { padding: 1.1rem 1rem; }
+    .phase-name { font-size: 1.05rem; }
+    .block { padding: 0.85rem 1rem; font-size: 0.9rem; }
+    .branch { padding: 0.85rem 1rem; font-size: 0.9rem; }
+    .timeline { padding-left: 1.2rem; }
+    .timeline-step::before { left: -1.2rem; }
+    .fill-zone { padding: 0.9rem; }
+    .fill-item input { min-width: 140px; font-size: 0.85rem; }
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo">SCRIPT <span class="accent">CLOSING</span></div>
+  <div class="phase-title" id="phaseTitle">Phase 0 — Brise-glace</div>
+  <button class="btn-restart" onclick="restart()">🏠 Recommencer</button>
+</header>
+
+<nav class="progress" id="progress"></nav>
+
+<main class="main">
+  <div id="phaseContainer"></div>
+</main>
+
+<script>
+/* ============================================================
+   DATA — Tout le contenu du script, structuré
+   ============================================================ */
+const PHASES = [
+  {
+    id: 0,
+    short: "Bris…",
+    label: "Brise-glace",
+    title: "Phase 0 — Brise-glace",
+    emoji: "👋",
+    name: "Phase 0 — Brise-glace",
+    subtitle: "Crée le lien avant de vendre",
+    duration: "1-2 minutes",
+    next: 1,
+    nextLabel: "Passer à la découverte"
+  },
+  {
+    id: 1,
+    short: "Déc…",
+    label: "Découverte",
+    title: "Phase 1 — Découverte",
+    emoji: "🎯",
+    name: "Transition + Découverte situation",
+    subtitle: "Cartographie sa réalité — tu n'évalues pas, tu comprends",
+    duration: "2-3 minutes",
+    next: 2,
+    nextLabel: "Creuser les douleurs"
+  },
+  {
+    id: 2,
+    short: "Dou…",
+    label: "Douleurs",
+    title: "Phase 2 — Douleurs",
+    emoji: "🩺",
+    name: "Phase 2 — Creuser les douleurs",
+    subtitle: "La plupart des débutants sautent cette phase. C'est l'erreur qui coûte les ventes.",
+    durationBadge: "critical",
+    durationText: "🔑 PHASE CRITIQUE — NE PAS SAUTER",
+    next: 3,
+    nextLabel: "Passer aux ambitions"
+  },
+  {
+    id: 3,
+    short: "Am…",
+    label: "Ambitions",
+    title: "Phase 3 — Ambitions",
+    emoji: "🌟",
+    name: "Phase 3 — Creuser les ambitions",
+    subtitle: "Le carburant émotionnel de la décision",
+    duration: "2-3 minutes",
+    durationBadge: "ambition",
+    next: 4,
+    nextLabel: "Présenter le site"
+  },
+  {
+    id: 4,
+    short: "Pré…",
+    label: "Présentation",
+    title: "Phase 4 — Présentation",
+    emoji: "🌉",
+    name: "Phase 4 — Le pont, puis la présentation",
+    subtitle: "Tu reformules sa situation, il valide, puis tu montres le site comme solution évidente",
+    duration: "3-4 minutes",
+    durationBadge: "bridge",
+    next: 5,
+    nextLabel: "Passer au prix"
+  },
+  {
+    id: 5,
+    short: "Clo…",
+    label: "Close",
+    title: "Phase 5 — Close",
+    emoji: "🤝",
+    name: "Phase 5 — Prix et close",
+    subtitle: "Direct, confiant, sans hésiter",
+    durationBadge: "moment",
+    durationText: "💰 LE MOMENT DE VÉRITÉ",
+    next: null
+  },
+  {
+    id: 6,
+    short: "Obj…",
+    label: "Objections",
+    title: "Phase 6 — Objections",
+    emoji: "!",
+    name: "Phase 6 — Guide anti-objections",
+    subtitle: "",
+    durationBadge: "guide",
+    durationText: "🛡️ GUIDE ANTI-OBJECTIONS",
+    backToClose: true,
+    next: null
+  }
+];
+
+/* ============================================================
+   RENDER — Génération de chaque phase
+   ============================================================ */
+let state = {
+  current: 0,
+  visited: new Set([0])
+};
+
+function el(tag, opts = {}, ...children) {
+  const node = document.createElement(tag);
+  if (opts.class) node.className = opts.class;
+  if (opts.html) node.innerHTML = opts.html;
+  if (opts.text) node.textContent = opts.text;
+  if (opts.onclick) node.onclick = opts.onclick;
+  if (opts.attrs) Object.entries(opts.attrs).forEach(([k, v]) => node.setAttribute(k, v));
+  children.flat().filter(Boolean).forEach(c => {
+    if (typeof c === "string") node.insertAdjacentHTML("beforeend", c);
+    else node.appendChild(c);
+  });
+  return node;
+}
+
+/* ----- Progress bar ----- */
+function renderProgress() {
+  const nav = document.getElementById("progress");
+  nav.innerHTML = "";
+  PHASES.forEach((p, i) => {
+    const step = document.createElement("div");
+    step.className = "step";
+    if (state.current === p.id) step.classList.add("active");
+    else if (state.visited.has(p.id) && p.id < state.current) step.classList.add("done");
+    step.onclick = () => goTo(p.id);
+    const num = p.id === 6 ? "!" : p.id;
+    step.innerHTML = `<span class="step-num">${num}</span><span class="step-label">${p.short}</span>`;
+    nav.appendChild(step);
+    if (i < PHASES.length - 1) {
+      const c = document.createElement("div");
+      c.className = "step-connector";
+      nav.appendChild(c);
+    }
+  });
+}
+
+/* ----- Toolbar (back + duration) ----- */
+function renderToolbar(phase) {
+  const tb = el("div", { class: "toolbar" });
+  if (phase.id > 0) {
+    const back = el("button", {
+      class: "btn-back",
+      text: phase.backToClose ? "← Retour au close" : "← Retour",
+      onclick: () => goTo(phase.backToClose ? 5 : phase.id - 1)
+    });
+    tb.appendChild(back);
+  }
+  if (phase.durationText) {
+    tb.appendChild(el("span", { class: `badge ${phase.durationBadge}`, text: phase.durationText }));
+  } else if (phase.duration) {
+    const cls = phase.durationBadge ? `duration ${phase.durationBadge}` : "duration";
+    tb.appendChild(el("span", { class: `badge ${cls}`, html: `🕒 ${phase.duration}` }));
+  }
+  return tb;
+}
+
+/* ----- Phase header ----- */
+function renderPhaseHeader(phase) {
+  return el("div", { class: "phase-header" },
+    el("div", { class: "phase-emoji", text: phase.emoji }),
+    el("div", {},
+      el("div", { class: "phase-name", text: phase.name }),
+      phase.subtitle ? el("div", { class: "phase-subtitle", text: phase.subtitle }) : null
+    )
+  );
+}
+
+/* ----- Block helpers ----- */
+function blockBlue(label, body) {
+  return el("div", { class: "block block-blue", html: `<strong>${label}</strong> ${body}` });
+}
+function blockYellow(html) {
+  return el("div", { class: "block block-yellow", html });
+}
+function blockTuDis(...paragraphs) {
+  const inner = paragraphs.map(p => `<p>${p}</p>`).join("");
+  return el("div", { class: "block block-tu-dis" },
+    el("div", { class: "label", html: "💬 Tu dis" }),
+    el("div", { class: "text", html: inner })
+  );
+}
+function blockRedQuestion(label, text) {
+  return el("div", { class: "block block-red-question" },
+    el("span", { class: "label", text: label }),
+    el("div", { class: "text", text: text })
+  );
+}
+function divider(label) {
+  return el("div", { class: "divider", text: label });
+}
+function ilDitQuoi(label = "Il dit quoi ?") {
+  return el("div", { class: "il-dit-quoi", text: label });
+}
+
+/* ----- Branch helper avec reveal ----- */
+function branch(emoji, label, revealContent, extraClass = "", extraRight = "") {
+  const wrap = el("div", {});
+  const btn = el("button", { class: `branch ${extraClass}` },
+    el("div", { class: "branch-content" },
+      emoji ? el("span", { class: "branch-emoji", text: emoji }) : null,
+      el("span", { html: label })
+    ),
+    el("span", { class: extraRight ? "branch-arrow guide" : "branch-arrow", html: extraRight || "→" })
+  );
+  const rev = el("div", { class: "reveal" }, ...revealContent);
+  btn.onclick = () => {
+    const isOpen = rev.classList.contains("open");
+    // close siblings
+    wrap.parentElement.querySelectorAll(".branch.active").forEach(b => b.classList.remove("active"));
+    wrap.parentElement.querySelectorAll(".reveal.open").forEach(r => r.classList.remove("open"));
+    if (!isOpen) {
+      btn.classList.add("active");
+      rev.classList.add("open");
+    }
+  };
+  wrap.appendChild(btn);
+  wrap.appendChild(rev);
+  return wrap;
+}
+
+function ctaBranch(label, onClickFn) {
+  const btn = el("button", { class: "branch cta", onclick: onClickFn },
+    el("div", { class: "branch-content" },
+      el("span", { class: "branch-emoji", text: "▶" }),
+      el("span", { html: label })
+    ),
+    el("span", { class: "branch-arrow", html: "→" })
+  );
+  return btn;
+}
+
+/* ============================================================
+   PHASES BUILDERS
+   ============================================================ */
+
+function buildPhase0() {
+  const body = el("div", { class: "phase-body" });
+  body.appendChild(blockBlue("Mindset :", `Tu n'es pas un commercial qui appelle. Tu es quelqu'un qui a travaillé pour lui avant l'appel. Décontracte-toi.`));
+  body.appendChild(blockTuDis(`"Salut [prénom] ! C'est [ton prénom]. Ça se passe comment pour toi aujourd'hui ?"`));
+  body.appendChild(blockYellow(`⏸ <b>Pause.</b> Laisse-le vraiment répondre. Écoute. Ne coupe pas.`));
+  body.appendChild(divider("SELON SA RÉPONSE"));
+  body.appendChild(ilDitQuoi());
+
+  const branches = el("div", { class: "branches" });
+
+  branches.appendChild(branch("🔨", "Il est en plein chantier / débordé", [
+    blockTuDis(`"Ah t'es en plein boulot — respect. Je vais pas te garder longtemps, on va aller à l'essentiel."`),
+    ctaBranch("Passer à la découverte", () => goTo(1))
+  ]));
+
+  branches.appendChild(branch("😌", "Ça va, c'est calme", [
+    blockTuDis(`"C'est bien une petite accalmie des fois. Tu bosses sur quoi en ce moment ?"`),
+    blockYellow(`Rebondis sur ce qu'il dit — 1 échange naturel suffit. Puis :`),
+    ctaBranch("Passer à la découverte", () => goTo(1))
+  ]));
+
+  branches.appendChild(branch("💬", "Il parle d'autre chose (météo, chantier...)", [
+    blockTuDis(`"Ah ouais — et dans ta zone c'est comment en ce moment niveau activité ?"`),
+    blockYellow(`Rebondis naturellement, puis transitions :`),
+    ctaBranch("Passer à la découverte", () => goTo(1))
+  ]));
+
+  body.appendChild(branches);
+  return body;
+}
+
+function buildPhase1() {
+  const body = el("div", { class: "phase-body" });
+
+  body.appendChild(blockTuDis(`"Bon écoute, j'ai pris du temps pour regarder ton activité avant qu'on se parle — j'ai même préparé un exemple de site pour toi. Je vais te montrer ça dans quelques minutes. Mais avant ça, j'ai quelques questions parce que je veux m'assurer que ce que j'ai préparé colle vraiment à ta situation."`));
+
+  body.appendChild(divider("QUESTION D'OUVERTURE"));
+  body.appendChild(blockTuDis(`"Aujourd'hui, les clients ils te trouvent comment principalement ?"`));
+  body.appendChild(blockYellow(`⏸ <b>Silence.</b> Laisse-le répondre sans couper.`));
+
+  body.appendChild(divider("SELON SA RÉPONSE"));
+  body.appendChild(ilDitQuoi());
+
+  const branches = el("div", { class: "branches" });
+
+  branches.appendChild(branch("🗣️", "Bouche à oreille", [
+    blockTuDis(`"C'est sympa le bouche à oreille. Mais t'as une maîtrise là-dessus ? Genre si demain t'as besoin de plus de chantiers, tu peux actionner quelque chose ou t'es dépendant de ce que les gens vont dire autour d'eux ?"`),
+    ctaBranch("Creuser les douleurs", () => goTo(2))
+  ]));
+
+  branches.appendChild(branch("📱", "Le Bon Coin / réseaux sociaux", [
+    blockTuDis(`"Et ça te ramène quoi comme qualité de clients ? C'est des gens qui comparent les prix ou t'as des clients qui te font confiance d'entrée ?"`),
+    ctaBranch("Creuser les douleurs", () => goTo(2))
+  ]));
+
+  branches.appendChild(branch("🌐", `"J'ai déjà un site"`, [
+    blockTuDis(`"Il est actif comment ? Quand tu cherches [activité] à [ville] sur Google, il sort à quelle position à peu près ?"`),
+    blockYellow(`S'il ne sait pas → <b>il ne sort pas.</b> Note-le pour plus tard.`),
+    ctaBranch("Creuser les douleurs", () => goTo(2))
+  ]));
+
+  branches.appendChild(branch("🤷", "Pas vraiment / rien de précis", [
+    blockTuDis(`"Donc c'est vraiment de l'informel — les gens qui te connaissent, les recommandations... T'as jamais vraiment eu de source prévisible de clients ?"`),
+    ctaBranch("Creuser les douleurs", () => goTo(2))
+  ]));
+
+  body.appendChild(branches);
+
+  body.appendChild(divider("PUIS TOUJOURS ENCHAÎNER AVEC"));
+  body.appendChild(blockTuDis(`"Et là en ce moment, t'as de la capacité pour prendre de nouveaux chantiers ou tu es bien chargé ?"`));
+  body.appendChild(blockYellow(`S'il est chargé → <em>"C'était pareil l'hiver dernier ?"</em> — creuse l'irrégularité.<br>S'il pourrait en prendre plus → 🎯 note-le, c'est ta munition.`));
+
+  body.appendChild(ctaBranch("Creuser les douleurs", () => goTo(2)));
+
+  return body;
+}
+
+function buildPhase2() {
+  const body = el("div", { class: "phase-body" });
+
+  body.appendChild(blockBlue("Règle :", `Tu ne présentes rien avant d'avoir fait sortir la douleur réelle. Note ses mots exacts — tu les réutilises dans le pont.`));
+  body.appendChild(blockTuDis(`"Et si tu devais me dire c'est quoi ton plus gros problème côté activité en ce moment — ce serait quoi ?"`));
+  body.appendChild(blockYellow(`⏸ <b>Silence.</b> Ne suggère rien. Laisse-le répondre.`));
+
+  body.appendChild(divider("EXPLORE LA PISTE QU'IL OUVRE"));
+  body.appendChild(ilDitQuoi("Il parle de quoi ?"));
+
+  const branches = el("div", { class: "branches" });
+
+  branches.appendChild(branch("📅", "Mois irréguliers / calmes", [
+    blockTuDis(`"Les mois ils sont réguliers ou y'a des périodes où c'est le calme plat ?"`),
+    blockTuDis(`"Et quand c'est plus calme — concrètement ça se passe comment pour toi ?"`),
+    blockTuDis(`"C'est quelque chose qui revient souvent ou c'est plutôt ponctuel ?"`),
+    blockYellow(`<b>Relances :</b> <em>"Ça dure depuis combien de temps ça ?"</em> / <em>"Ça t'impacte comment au quotidien ?"</em>`),
+    ctaBranch("Passer aux ambitions", () => goTo(3))
+  ]));
+
+  branches.appendChild(branch("🔗", "Dépendance au bouche à oreille", [
+    blockTuDis(`"Et si demain tes clients habituels arrêtent de te recommander — t'as un plan B ?"`),
+    blockTuDis(`"T'as l'impression de maîtriser ton activité ou plutôt de subir ce qui vient ?"`),
+    blockTuDis(`"Ça t'est déjà arrivé d'avoir un mois où les recommandations se sont taries ?"`),
+    blockYellow(`<b>Relances :</b> <em>"Et concrètement ça se passe comment ?"</em> / <em>"C'est arrivé quand pour la dernière fois ?"</em>`),
+    ctaBranch("Passer aux ambitions", () => goTo(3))
+  ]));
+
+  branches.appendChild(branch("⚔️", "Concurrence / visibilité", [
+    blockTuDis(`"T'as des concurrents dans ta zone qui s'en sortent mieux que toi côté visibilité ?"`),
+    blockTuDis(`"Quand un client cherche [activité] à [ville] sur Google — c'est qui qui sort ?"`),
+    blockTuDis(`"Et ça te fait quoi de savoir que ces demandes-là elles partent ailleurs ?"`),
+    blockYellow(`Laisse-le exprimer la frustration. <b>Ne coupe pas.</b>`),
+    ctaBranch("Passer aux ambitions", () => goTo(3))
+  ]));
+
+  branches.appendChild(branch("🥀", "Mauvaise qualité de clients / prix", [
+    blockTuDis(`"C'est quoi le profil de client qui t'intéresse le plus — ceux qui ont un vrai projet et un vrai budget ?"`),
+    blockTuDis(`"Et aujourd'hui t'as accès à ce type de client ou c'est plutôt du volume avec des marges serrées ?"`),
+    blockTuDis(`"T'as des chantiers où t'as vraiment kiffé ce que tu faisais — et des clients que tu supportes pas ? C'est quoi la différence entre les deux ?"`),
+    ctaBranch("Passer aux ambitions", () => goTo(3))
+  ]));
+
+  branches.appendChild(branch("😐", `"Ça va, pas vraiment de problème"`, [
+    blockBlue("Technique :", `Ne conteste pas. Normalise, puis creuse autrement.`),
+    blockTuDis(`"C'est bien ça. Beaucoup d'artisans que je rencontre s'en sortent bien — et pourtant y'a quand même des mois où ils se demandent d'où va venir le prochain chantier. C'est quelque chose que tu ressens des fois ?"`),
+    blockYellow(`S'il reste sur "non" → <em>"Et c'était pareil l'année dernière à la même période ?"</em><br>Ou → <em>"T'as jamais de période où tu te dis que t'aimerais avoir plus de choix sur les chantiers que tu prends ?"</em>`),
+    ctaBranch("Passer aux ambitions", () => goTo(3))
+  ]));
+
+  body.appendChild(branches);
+  return body;
+}
+
+function buildPhase3() {
+  const body = el("div", { class: "phase-body" });
+
+  body.appendChild(blockBlue("Règle :", `Pose une question ouverte et laisse-le construire sa vision lui-même. Moins tu parles, plus il se vend le site tout seul.`));
+  body.appendChild(blockTuDis(`"Et si on réglait ça — si t'avais une vraie source de clients réguliers qui rentraient sans que t'aies à courir après — ça changerait quoi pour toi concrètement ?"`));
+  body.appendChild(blockYellow(`⏸ <b>Silence.</b> Laisse-le parler. Ne suggère rien.`));
+
+  body.appendChild(divider("SELON CE QU'IL DIT"));
+  body.appendChild(ilDitQuoi());
+
+  const branches = el("div", { class: "branches" });
+
+  branches.appendChild(branch("🏛️", "Stabilité / régularité / sérénité", [
+    blockTuDis(`"C'est quoi pour toi une activité qui tourne bien — un certain volume de chantiers par mois, un certain revenu ?"`),
+    blockTuDis(`"Si t'avais ça tous les mois sans te battre pour le trouver — ça te libèrerait quoi concrètement ?"`),
+    ctaBranch("Présenter le site", () => goTo(4))
+  ]));
+
+  branches.appendChild(branch("🎯", "Choisir ses chantiers / monter en gamme", [
+    blockTuDis(`"T'aimerais pouvoir choisir sur quels chantiers tu dis oui et lesquels tu refuses ?"`),
+    blockTuDis(`"C'est quoi le type de projet qui t'intéresse vraiment — ce que t'adorerais faire si t'avais le choix ?"`),
+    ctaBranch("Présenter le site", () => goTo(4))
+  ]));
+
+  branches.appendChild(branch("🏆", "Image pro / crédibilité / fierté", [
+    blockTuDis(`"Quand un prospect te contacte via le bouche à oreille — il arrive comment ? Il te fait confiance d'entrée ou il compare avec d'autres ?"`),
+    blockTuDis(`"Et si t'avais quelque chose à lui montrer — un site pro avec tes réalisations — ça changerait la dynamique ?"`),
+    ctaBranch("Présenter le site", () => goTo(4))
+  ]));
+
+  branches.appendChild(branch("💰", "Revenu / sécurité financière / famille", [
+    blockTuDis(`"C'est quoi pour toi un mois où tu souffles — en termes de volume ou de revenu ?"`),
+    blockTuDis(`"Et aujourd'hui t'en es à combien de mois comme ça dans l'année ?"`),
+    ctaBranch("Présenter le site", () => goTo(4))
+  ]));
+
+  body.appendChild(branches);
+
+  body.appendChild(blockBlue("Check avant de continuer :",
+    `Tu dois pouvoir compléter mentalement ces deux phrases :<br><br>
+    → <em>"Aujourd'hui il souffre de ____"</em><br>
+    → <em>"Ce qu'il veut vraiment c'est ____"</em><br><br>
+    Si tu ne peux pas — tu continues de creuser.`));
+
+  return body;
+}
+
+function buildPhase4() {
+  const body = el("div", { class: "phase-body" });
+
+  body.appendChild(blockBlue("Logique :", `Le pont vient AVANT le site. Tu crées l'accord sur le problème d'abord — le site arrive ensuite comme la réponse naturelle. Pas l'inverse.`));
+
+  // ÉTAPE 1
+  body.appendChild(divider("ÉTAPE 1 — VÉRIFIER MENTALEMENT AVANT DE PARLER"));
+
+  const fillZone = el("div", { class: "fill-zone" });
+  fillZone.appendChild(el("div", { class: "fill-zone-title", html: "✏️ Complète mentalement avant de continuer" }));
+
+  const douleurItem = el("div", { class: "fill-item douleur" });
+  douleurItem.appendChild(el("div", { class: "fill-label", html: "🩺 SA DOULEUR" }));
+  douleurItem.appendChild(el("div", { class: "fill-text", html: `Aujourd'hui il souffre de <input type="text" id="fillDouleur" placeholder="____________________">` }));
+  douleurItem.appendChild(el("div", { class: "fill-hint", text: "→ Ses mots exacts, pas les tiens" }));
+  fillZone.appendChild(douleurItem);
+
+  const ambItem = el("div", { class: "fill-item ambition" });
+  ambItem.appendChild(el("div", { class: "fill-label", html: "🌟 SON AMBITION" }));
+  ambItem.appendChild(el("div", { class: "fill-text", html: `Ce qu'il veut vraiment c'est <input type="text" id="fillAmbition" placeholder="____________________">` }));
+  ambItem.appendChild(el("div", { class: "fill-hint", text: "→ Ses mots exacts, pas les tiens" }));
+  fillZone.appendChild(ambItem);
+
+  fillZone.appendChild(el("div", { class: "fill-warning", html: "Tu ne peux pas compléter les deux → retourne creuser avant de continuer." }));
+  body.appendChild(fillZone);
+
+  // ÉTAPE 2
+  body.appendChild(divider("ÉTAPE 2 — REFORMULER ET LUI FAIRE VALIDER"));
+  body.appendChild(blockYellow(`<b>Technique :</b> Tu reformules avec SES mots et tu lui demandes si t'as bien compris. Ça crée l'accord — et c'est lui qui confirme son propre problème.`));
+  body.appendChild(blockTuDis(
+    `"Dis-moi si j'ai bien compris ta situation.`,
+    `Aujourd'hui <b>[sa douleur — SES mots]</b>. Et ce que tu voudrais vraiment c'est <b>[son ambition — SES mots]</b>.`,
+    `C'est bien ça ?"`
+  ));
+  body.appendChild(blockYellow(`⏸ <b>Attends sa confirmation.</b> S'il corrige quelque chose → écoute, reformule avec sa correction, et reprends.`));
+
+  body.appendChild(ilDitQuoi("Il réagit comment ?"));
+
+  const reactBranches = el("div", { class: "branches" });
+
+  reactBranches.appendChild(branch("✅", `"Oui c'est exactement ça"`, [
+    ctaBranch("Construire le pont", () => {
+      // scroll vers étape 3
+      const t = document.getElementById("pontZone");
+      if (t) t.scrollIntoView({ behavior: "smooth", block: "start" });
+    })
+  ]));
+
+  reactBranches.appendChild(branch("✏️", "Il corrige ou précise quelque chose", [
+    blockBlue("Bonne chose.", `Il affine sa douleur ou son ambition. Écoute, intègre, reformule.`),
+    blockTuDis(`"Ah je vois, donc c'est plutôt <b>[sa correction]</b>. Je comprends mieux. Et à part ça j'avais bien cerné ?"`),
+    blockYellow(`Une fois qu'il confirme → continue vers l'étape suivante.`),
+    ctaBranch("Il confirme → construire le pont", () => {
+      const t = document.getElementById("pontZone");
+      if (t) t.scrollIntoView({ behavior: "smooth", block: "start" });
+    })
+  ]));
+
+  body.appendChild(reactBranches);
+
+  // ÉTAPE 3
+  const pontZone = el("div", { attrs: { id: "pontZone" }, class: "phase-body", });
+  pontZone.style.padding = "0";
+  pontZone.appendChild(divider("ÉTAPE 3 — CONSTRUIRE LE PONT"));
+  pontZone.appendChild(blockTuDis(
+    `"Ok donc si je résume — la vraie question aujourd'hui c'est pas tellement 'est-ce que j'ai besoin d'un site'.`,
+    `C'est plutôt : est-ce que tu veux continuer à <b>[sa douleur — SES mots]</b>...`,
+    `ou enfin <b>[son ambition — SES mots]</b> ?"`
+  ));
+  pontZone.appendChild(blockYellow(`⏸ <b>Silence.</b> Laisse cette question flotter. Ne la commente pas. C'est lui qui doit répondre.`));
+
+  // ÉTAPE 4
+  pontZone.appendChild(divider("ÉTAPE 4 — PRÉSENTER LE SITE COMME LA SOLUTION"));
+  pontZone.appendChild(blockTuDis(`"C'est exactement pour ça que j'ai préparé quelque chose pour toi. Laisse-moi te montrer."`));
+  pontZone.appendChild(blockYellow(`🖥️ <b>Partage ton écran.</b> Montre le site exemple avec son activité et sa ville.`));
+  pontZone.appendChild(blockTuDis(
+    `"Donc là j'ai créé un exemple pour [activité] à [ville]. Tu vois — les services, les photos, les avis, et un bouton pour appeler ou envoyer une demande directement.`,
+    `L'idée c'est simple : quand quelqu'un tape [activité] [ville] sur Google, il tombe sur ça. Il voit que t'es pro et il peut te contacter en 30 secondes."`
+  ));
+  pontZone.appendChild(blockYellow(`⏸ <b>Silence.</b> Laisse-le regarder. Ne commente pas pendant qu'il observe.`));
+  pontZone.appendChild(blockTuDis(`"Honnêtement — si ça c'était ton site et que tes clients tombaient là-dessus quand ils te cherchent, tu penses que ça pourrait t'amener des demandes en plus ?"`));
+
+  pontZone.appendChild(divider("SA RÉACTION"));
+  pontZone.appendChild(ilDitQuoi());
+
+  const reactionBranches = el("div", { class: "branches" });
+
+  const okBranch = el("div", {});
+  const okBtn = el("button", { class: "branch", onclick: () => goTo(5) },
+    el("div", { class: "branch-content" },
+      el("span", { class: "branch-emoji", text: "✅" }),
+      el("div", {},
+        el("div", { html: `<b>"Oui ça pourrait aider"</b>` }),
+        el("div", { class: "branch-sub", html: "→ Prix et close" })
+      )
+    ),
+    el("span", { class: "branch-arrow", html: "→" })
+  );
+  okBranch.appendChild(okBtn);
+  reactionBranches.appendChild(okBranch);
+
+  reactionBranches.appendChild(branch("🤔", `"Peut-être... je sais pas trop"`, [
+    blockBlue("Il n'est pas encore convaincu", `→ tu n'as pas assez creusé les douleurs. Reprends depuis le début.`),
+    blockTuDis(`"Je comprends. Dis-moi — qu'est-ce qui te ferait douter que ça pourrait marcher pour toi ?"`),
+    blockYellow(`Laisse-le s'exprimer, puis retourne creuser la douleur ou l'ambition qu'il mentionne.`),
+    ctaBranch("Retourner creuser les douleurs", () => goTo(2))
+  ]));
+
+  pontZone.appendChild(reactionBranches);
+  body.appendChild(pontZone);
+
+  return body;
+}
+
+function buildPhase5() {
+  const body = el("div", { class: "phase-body" });
+
+  body.appendChild(blockTuDis(
+    `"Normalement ce type de site chez une agence classique c'est entre 1000 et 3000€. Nous on travaille avec beaucoup d'artisans, on a automatisé la création, donc on est à 300€ — site complet, mis en ligne pour toi.`,
+    `Un seul client trouvé grâce au site et il est déjà remboursé."`
+  ));
+
+  body.appendChild(blockRedQuestion("⚡ Question de close — dis-la et tiens le silence", `"On l'active pour ton activité ?"`));
+
+  body.appendChild(blockYellow(`⏸ <b>Silence absolu.</b> Ne remplis pas le vide. Attends. La prochaine personne qui parle a perdu.`));
+
+  body.appendChild(divider("SA RÉPONSE"));
+  body.appendChild(ilDitQuoi());
+
+  const branches = el("div", { class: "branches" });
+
+  branches.appendChild(branch("🎉", `"Oui" / Il est partant`, [
+    blockBlue("🎯 Ne célèbre pas encore.", `Tu passes direct au paiement.`),
+    el("div", { class: "close-options" },
+      el("div", { class: "close-options-title", html: "✅ Closes de paiement — choisis-en un" }),
+      el("div", { class: "close-option", html: `"Parfait. Tu préfères régler par <b>carte ou par virement</b> ?"` }),
+      el("div", { class: "close-option", html: `"Je t'envoie le lien sur <b>WhatsApp ou par email</b> ?"` }),
+      el("div", { class: "close-option", html: `"On le met avec ton <b>numéro actuel ou un numéro dédié</b> ?"` })
+    )
+  ]));
+
+  branches.appendChild(branch("😬", "Il hésite / silence gêné", [
+    blockTuDis(`"Je t'entends. Qu'est-ce qui te ferait hésiter exactement ?"`),
+    blockYellow(`⏸ <b>Silence.</b> Laisse-le formuler son objection.`),
+    blockTuDis(`"Et à part ça, est-ce qu'il y a autre chose qui te ferait hésiter ?"`),
+    blockYellow(`S'il dit non → <em>"Donc si on règle ça, t'es partant ?"</em>`),
+    ctaBranch("Traiter l'objection", () => goTo(6))
+  ]));
+
+  // Le bouton "objection précise" → guide
+  const objBranch = el("button", { class: "branch", onclick: () => goTo(6) },
+    el("div", { class: "branch-content" },
+      el("span", { class: "branch-emoji", text: "🛡️" }),
+      el("span", { html: `Il a une objection précise` })
+    ),
+    el("span", { class: "branch-arrow guide", html: "→ Guide objections" })
+  );
+  branches.appendChild(objBranch);
+
+  body.appendChild(branches);
+  return body;
+}
+
+function buildPhase6() {
+  const body = el("div", { class: "phase-body" });
+
+  body.appendChild(blockBlue("Règle d'or — isoler avant de répondre :",
+    `Pose toujours d'abord : <em>"À part ça, est-ce qu'il y a autre chose qui te ferait hésiter ?"</em><br>
+    S'il dit non → tu traites cette objection et tu closes direct.`));
+
+  // === Objection 1 : Je dois réfléchir ===
+  body.appendChild(buildAccordion("🤔", `"Je dois réfléchir"`, [
+    blockBlue("", `Ne dis jamais "Bien sûr, prends le temps." C'est la mort du deal.`),
+    timelineStep("RÉPONDS", false, [
+      blockTuDis(`"Je comprends. Mais dis-moi — qu'est-ce qui te ferait hésiter exactement ?"`),
+      blockYellow(`⏸ Silence. Laisse parler.`)
+    ]),
+    timelineStep("REFORMULE AVEC SES MOTS", false, [
+      blockTuDis(`"Donc si je comprends bien, c'est surtout [ses mots]. Et à part ça, le site te plaît et tu vois l'intérêt ?"`)
+    ]),
+    timelineStep("S'IL DIT OUI → CLOSE", true, [
+      blockTuDis(`"Alors la vraie question c'est : est-ce que ça vaut le coup de tester à 300€ ? Pendant que tu réfléchis, tes concurrents qui ont un site — ils reçoivent ces demandes-là."`),
+      blockTuDis(`"On le met en place aujourd'hui et tu vois ce que ça donne dans les 30 jours."`)
+    ])
+  ]));
+
+  // === Objection 2 : Je dois en parler à ma femme ===
+  body.appendChild(buildAccordion("👫", `"Je dois en parler à ma femme / mon associé"`, [
+    timelineStep("IDENTIFIE QUI", false, [
+      blockTuDis(`"Bien sûr. C'est ta femme ? Ton associé ?"`)
+    ]),
+    timelineStep("DÉTERMINE QUI DÉCIDE", false, [
+      blockTuDis(`"Et en général pour ce type de décision dans ton activité — c'est toi qui tranches ou vous décidez ensemble ?"`),
+      blockYellow(`S'il dit "c'est moi" → la vraie objection est ailleurs. <em>"Alors qu'est-ce qui te retient ?"</em>`)
+    ]),
+    timelineStep("PROJETTE", false, [
+      blockTuDis(`"Si elle était là avec nous maintenant — tu penses qu'elle aurait une objection au fait d'avoir un site pour 300€ qui peut vous amener des clients ?"`),
+      blockYellow(`⏸ Silence.`)
+    ]),
+    timelineStep("CLOSE", true, [
+      blockTuDis(`"On l'active maintenant et tu lui montres ce soir. Si ça lui va pas — garantie 14 jours."`)
+    ])
+  ]));
+
+  // === Objection 3 : C'est trop cher ===
+  body.appendChild(buildAccordion("💸", `"C'est trop cher"`, [
+    blockBlue("", `Ne te défends pas. Creuse d'abord.`),
+    timelineStep("CREUSE", false, [
+      blockTuDis(`"Trop cher par rapport à quoi exactement ?"`),
+      blockYellow(`⏸ Silence. Laisse-le répondre.`)
+    ]),
+    timelineStep("REPOSITIONNE", false, [
+      blockTuDis(`"Un site comme ça chez une agence c'est 1000 à 3000€. Là on est à 300€. Et un seul chantier trouvé via le site — pour toi ça vaut combien ?"`)
+    ]),
+    timelineStep("RETOURNE LA QUESTION", true, [
+      blockTuDis(`"La question c'est pas 'est-ce que 300€ c'est cher'. C'est 'est-ce que ce site peut me ramener au moins un client ?' Et tu m'as dit toi-même que tu pourrais en prendre plus."`),
+      blockTuDis(`"On le met en place ?"`)
+    ])
+  ]));
+
+  // === Objection 4 : Je ne peux pas maintenant ===
+  body.appendChild(buildAccordion("⏳", `"Je ne peux pas maintenant"`, [
+    timelineStep("IDENTIFIE LE FREIN", false, [
+      blockTuDis(`"C'est un problème de timing ou de budget ?"`)
+    ]),
+    el("div", { class: "divider", text: "SELON SA RÉPONSE" }),
+    ilDitQuoi("C'est quoi le frein ?"),
+    (() => {
+      const branches = el("div", { class: "branches" });
+      branches.appendChild(branch("📅", "Timing / pas le moment", [
+        blockTuDis(`"La mise en ligne prend 48h — ça te prend pas de temps. Et pendant que tu continues tes chantiers, le site travaille pour toi en arrière-plan."`),
+        blockTuDis(`"Justement le mettre en place maintenant c'est ce qui te permet de commencer à récupérer des demandes le plus tôt possible."`),
+        blockTuDis(`"On l'active ?"`)
+      ]));
+      branches.appendChild(branch("💳", "Budget / pas les moyens", [
+        blockTuDis(`"Je comprends. T'aimerais payer en plusieurs fois ?"`),
+        blockTuDis(`"Un seul chantier trouvé via le site et il est remboursé. Et tu m'as dit que t'as de la capacité pour prendre plus de clients — donc il se finance tout seul dès le premier mois."`),
+        blockTuDis(`"On le met en place ?"`)
+      ]));
+      return branches;
+    })()
+  ]));
+
+  // === Objection 5 : J'ai déjà essayé ===
+  body.appendChild(buildAccordion("😤", `"J'ai déjà essayé, ça n'a rien donné"`, [
+    blockBlue("", `C'est l'objection la plus délicate — elle cache une vraie blessure. Écoute vraiment avant de parler.`),
+    timelineStep("LAISSE-LE RACONTER", false, [
+      blockTuDis(`"Qu'est-ce que t'avais essayé ?"`),
+      blockYellow(`⏸ Écoute vraiment. Ne coupe pas.`)
+    ]),
+    timelineStep("IDENTIFIE LE VRAI PROBLÈME", false, [
+      blockTuDis(`"C'était le site lui-même ou il était pas visible sur Google ?"`)
+    ]),
+    timelineStep("DIFFÉRENCIE + GARANTIE", true, [
+      blockTuDis(`"Ce qu'on fait c'est un site conçu spécifiquement pour apparaître quand quelqu'un cherche [activité] à [ville]. C'est pas une vitrine — c'est un outil fait pour être trouvé."`),
+      blockTuDis(`"Et à 300€ avec garantie 14 jours — si t'as pas eu au moins une demande, on te rembourse. T'as rien à perdre."`)
+    ])
+  ]));
+
+  // === Objection 6 : Je te rappelle ===
+  body.appendChild(buildAccordion("📞", `"Je te rappelle"`, [
+    blockBlue("", `C'est presque toujours un non poli. Ne le laisse pas raccrocher sans avoir creusé.`),
+    timelineStep("CONFRONTE DOUCEMENT", false, [
+      blockTuDis(`"Entre nous — quand tu dis ça, c'est vraiment que t'as besoin de temps ou y'a quelque chose qui te bloque et que t'as pas encore dit ?"`),
+      blockYellow(`S'il admet un frein → traite l'objection réelle ci-dessus.`)
+    ]),
+    timelineStep("S'IL INSISTE → URGENCE + GARANTIE", true, [
+      blockTuDis(`"Je vais être honnête — je maintiens pas le tarif 300€ après cet appel. Si tu veux on fait simple : je l'active maintenant, et si dans 14 jours t'es pas satisfait je te rembourse. Zéro risque."`)
+    ])
+  ]));
+
+  // === Closes finaux ===
+  const finalCloses = el("div", { class: "phase-card" });
+  finalCloses.style.marginTop = "1rem";
+  finalCloses.appendChild(el("div", { class: "phase-header" },
+    el("div", { class: "phase-emoji", text: "🎯" }),
+    el("div", {},
+      el("div", { class: "phase-name", text: "Closes finaux — jamais redemander l'avis" })
+    )
+  ));
+  const fcBody = el("div", { class: "phase-body" });
+  const cloOpt = el("div", { class: "close-options" });
+  cloOpt.appendChild(el("div", { class: "close-options-title", style: "color: var(--red);", html: "Pose une de ces questions — une seule" }));
+  cloOpt.appendChild(el("div", { class: "close-option", html: `"On l'active pour ton activité ?"` }));
+  cloOpt.appendChild(el("div", { class: "close-option", html: `"Tu préfères régler par <b>carte ou par virement</b> ?"` }));
+  cloOpt.appendChild(el("div", { class: "close-option", html: `"Je t'envoie le lien sur <b>WhatsApp ou par email</b> ?"` }));
+  cloOpt.appendChild(el("div", { class: "close-option", html: `"On le met avec ton <b>numéro actuel ou un numéro dédié</b> ?"` }));
+  fcBody.appendChild(cloOpt);
+  finalCloses.appendChild(fcBody);
+  body.appendChild(finalCloses);
+
+  return body;
+}
+
+/* ----- Accordion helper ----- */
+function buildAccordion(emoji, title, contents) {
+  const acc = el("div", { class: "accordion" });
+  const header = el("div", { class: "acc-header" },
+    el("div", { class: "acc-title-wrap" },
+      el("span", { class: "acc-emoji", text: emoji }),
+      el("div", { class: "acc-content" },
+        el("div", { class: "acc-label", text: "Objection" }),
+        el("div", { class: "acc-title", html: title })
+      )
+    ),
+    el("span", { class: "acc-chevron", html: "▼" })
+  );
+  header.onclick = () => acc.classList.toggle("open");
+  acc.appendChild(header);
+  const inner = el("div", { class: "acc-body-inner" }, ...contents);
+  const body = el("div", { class: "acc-body" }, inner);
+  acc.appendChild(body);
+  return acc;
+}
+
+function timelineStep(label, isGreen, contents) {
+  const step = el("div", { class: `timeline-step ${isGreen ? "green" : ""}` });
+  step.appendChild(el("div", { class: "timeline-step-label", text: label }));
+  const c = el("div", { class: "timeline-step-content" }, ...contents);
+  step.appendChild(c);
+  const wrap = el("div", { class: "timeline" }, step);
+  return wrap;
+}
+
+/* ============================================================
+   RENDER ROUTER
+   ============================================================ */
+function renderPhase() {
+  const container = document.getElementById("phaseContainer");
+  container.innerHTML = "";
+  const phase = PHASES[state.current];
+  document.getElementById("phaseTitle").textContent = phase.title;
+
+  container.appendChild(renderToolbar(phase));
+
+  const card = el("div", { class: "phase-card" });
+  card.appendChild(renderPhaseHeader(phase));
+
+  let body;
+  switch (state.current) {
+    case 0: body = buildPhase0(); break;
+    case 1: body = buildPhase1(); break;
+    case 2: body = buildPhase2(); break;
+    case 3: body = buildPhase3(); break;
+    case 4: body = buildPhase4(); break;
+    case 5: body = buildPhase5(); break;
+    case 6: body = buildPhase6(); break;
+  }
+  card.appendChild(body);
+  container.appendChild(card);
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function goTo(phaseId) {
+  state.current = phaseId;
+  state.visited.add(phaseId);
+  renderProgress();
+  renderPhase();
+}
+
+function restart() {
+  state.current = 0;
+  state.visited = new Set([0]);
+  renderProgress();
+  renderPhase();
+}
+
+// Init
+renderProgress();
+renderPhase();
+</script>
+</body>
+</html>
